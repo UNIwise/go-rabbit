@@ -68,8 +68,8 @@ func (e *Exchange) NewQueue(name string, prefetch int) (*queue.Queue, error) {
 	return q, nil
 }
 
-// NewDeadLetterQueue create a new simple queue with the given configuration
-func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Duration, targetQueue queue.Queuer) (*queue.DeadLetterQueue, error) {
+// NewDeadLetterQueue create a new dead letter queue with the given configuration
+func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Duration, targetQueue queue.NamedQueue) (*queue.DeadLetterQueue, error) {
 	ch, err := e.Connection.Channel()
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to create channel for retry queue")
@@ -83,7 +83,29 @@ func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Durati
 		TimeToLive:   ttl,
 	})
 	if err != nil {
-		errors.Wrap(err, "Failed to initialize retry queue")
+		errors.Wrap(err, "Failed to initialize dead letter queue")
+	}
+
+	return q, nil
+}
+
+// NewBoundedRetryQueue create a new bounded retry queue with the given configuration
+func (e *Exchange) NewBoundedRetryQueue(name string, prefetch, maxRetries int, retryDelay time.Duration, targetQueue queue.NamedQueue) (*queue.BoundedRetryQueue, error) {
+	ch, err := e.Connection.Channel()
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to create channel for retry queue")
+	}
+
+	q, err := queue.NewBoundedRetryQueue(ch, &queue.BoundedRetryQueueConfig{
+		ExchangeName: e.ExchangeName,
+		Prefetch:     prefetch,
+		QueueName:    name,
+		TargetQueue:  targetQueue,
+		TimeToLive:   retryDelay,
+		MaxRetries:   maxRetries,
+	})
+	if err != nil {
+		errors.Wrap(err, "Failed to initialize bounded retry queue")
 	}
 
 	return q, nil

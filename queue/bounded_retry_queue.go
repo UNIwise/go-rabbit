@@ -27,7 +27,7 @@ type BoundedRetryQueueConfig struct {
 	Prefetch     int
 	MaxRetries   int
 	TimeToLive   time.Duration
-	TargetQueue  Queuer
+	TargetQueue  NamedQueue
 }
 
 // NewBoundedRetryQueue constructor for BoundedRetryQueue
@@ -65,13 +65,13 @@ func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*Boun
 // Every time an item is published to this queue it's redeliver count will be incremented
 // the count is stored in the "x-redelivered-count" header
 // If the max number of redeliveries is reached a ErrMaxRetries error will be returned
-func (q *BoundedRetryQueue) Publish(delivery *amqp.Delivery) error {
+func (q *BoundedRetryQueue) Publish(delivery amqp.Delivery) error {
 	redeliveries, err := q.getRedeliveries(delivery)
 	if err != nil {
 		return err
 	}
 
-	if redeliveries > q.MaxRetries {
+	if redeliveries >= q.MaxRetries {
 		return ErrMaxRetries
 	}
 
@@ -114,7 +114,7 @@ func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
 	return nil
 }
 
-func (q *BoundedRetryQueue) getRedeliveries(delivery *amqp.Delivery) (int, error) {
+func (q *BoundedRetryQueue) getRedeliveries(delivery amqp.Delivery) (int, error) {
 	redelivered := 0
 
 	if delivery.Headers != nil {

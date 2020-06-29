@@ -9,10 +9,8 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// Queuer is an interface describing the minimum amount of methods a queue must implement
-type Queuer interface {
-	Publish(item interface{}) error
-	Consume(ctx context.Context) (<-chan amqp.Delivery, error)
+// NamedQueue is an interface describing queues which can return their name
+type NamedQueue interface {
 	Name() string
 }
 

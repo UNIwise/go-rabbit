@@ -12,7 +12,7 @@ import (
 type DeadLetterQueue struct {
 	BaseQueue
 
-	TargetQueue Queuer
+	TargetQueue NamedQueue
 }
 
 // DeadLetterQueueConfig is the configuration the constructor NewDeadLetterQueue needs
@@ -21,7 +21,7 @@ type DeadLetterQueueConfig struct {
 	ExchangeName string
 	Prefetch     int
 	TimeToLive   time.Duration
-	TargetQueue  Queuer
+	TargetQueue  NamedQueue
 }
 
 // NewDeadLetterQueue is the constructor for DeadLetterQueue

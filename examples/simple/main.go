@@ -33,7 +33,7 @@ func main() {
 	producer(q)
 }
 
-func consumer(q queue.Queuer) {
+func consumer(q *queue.Queue) {
 	ctx := context.Background()
 	defer ctx.Done()
 
@@ -48,7 +48,7 @@ func consumer(q queue.Queuer) {
 	}
 }
 
-func producer(q queue.Queuer) {
+func producer(q *queue.Queue) {
 	count := 1
 	for {
 		time.Sleep(time.Second)
