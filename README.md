@@ -48,7 +48,7 @@ See [examples](examples/)
 
 - Simple Queue
 - Dead Letter Queue
-- Bound Retry Queue
+- Bounded Retry Queue
 
 ## Environment variables
 

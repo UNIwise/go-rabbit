@@ -64,6 +64,7 @@ func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*Boun
 // Publish a json serializable item to the queue
 // Every time an item is published to this queue it's redeliver count will be incremented
 // the count is stored in the "x-redelivered-count" header
+// If the max number of redeliveries is reached a ErrMaxRetries error will be returned
 func (q *BoundedRetryQueue) Publish(delivery *amqp.Delivery) error {
 	redeliveries, err := q.getRedeliveries(delivery)
 	if err != nil {
