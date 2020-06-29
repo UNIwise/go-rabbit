@@ -14,30 +14,30 @@ The aim of this package is to make a wrapper for RabbitMQ which provides:
 package main
 
 import (
-	"log"
+    "log"
 
-	rabbit "github.com/uniwise/go-rabbit"
+    rabbit "github.com/uniwise/go-rabbit"
 )
 
 func main() {
-	rmq, err := rabbit.NewEnvClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ex, err := rmq.NewExchange("exchange_name")
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	q, err := ex.NewQueue(
-		"queue_name", // Queue name
-		10,           // Prefetch
-	)
-	if err != nil {
-		log.Fatal(err)
+    rmq, err := rabbit.NewEnvClient()
+    if err != nil {
+        log.Fatal(err)
     }
-    
+
+    ex, err := rmq.NewExchange("exchange_name")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    q, err := ex.NewQueue(
+        "queue_name", // Queue name
+        10,           // Prefetch
+    )
+    if err != nil {
+        log.Fatal(err)
+    }
+
     ...
 }
 ```
