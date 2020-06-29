@@ -5,7 +5,7 @@ The aim of this package is to make a wrapper for RabbitMQ which provides:
 - Easy configuration of the connection through environment variables
 - Auto .env file use if available
 - Auto reconnect
-- Auto queue deceleration
+- Auto queue declaration
 - Different kinds of queue types for easier usage
 
 ## Usage
