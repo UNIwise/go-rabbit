@@ -55,7 +55,7 @@ func consumer(q *queue.Queue, r *queue.BoundedRetryQueue) {
 
 	for delivery := range ch {
 		log.Println("consumer received: redelivered count", delivery.Headers["x-redelivered-count"])
-		delivery.Ack(false)
+		delivery.Ack(false) // Remember to ack the delivery in the other queue!
 
 		if err := r.Publish(delivery); err != nil {
 			log.Print(err)
