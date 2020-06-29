@@ -31,9 +31,9 @@ func main() {
 	retryQueue, err := ex.NewBoundedRetryQueue(
 		"worker_retry", // Queue name
 		10,             // Prefetch
-		5,
-		time.Second,
-		queue,
+		5,              // Max retries
+		time.Second,    // Retry delay
+		queue,          // Target queue for redelivery
 	)
 	if err != nil {
 		log.Fatal(err)
