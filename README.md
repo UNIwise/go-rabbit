@@ -15,7 +15,8 @@ package main
 
 import (
     "log"
-
+    "context"
+    
     rabbit "github.com/uniwise/go-rabbit"
 )
 
@@ -38,7 +39,15 @@ func main() {
         log.Fatal(err)
     }
 
-    ...
+    ch, err := q.Consume(context.Background())
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    for delivery := range ch {
+        log.Println("consumer received:", string(delivery.Body))
+        delivery.Ack(false)
+    }
 }
 ```
 
