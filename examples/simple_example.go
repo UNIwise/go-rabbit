@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -42,20 +43,20 @@ func consumer(q queue.Queuer) {
 	}
 
 	for delivery := range ch {
-		log.Println("consumer received:", delivery)
+		log.Println("consumer received:", string(delivery.Body))
+		delivery.Ack(false)
 	}
 }
 
 func producer(q queue.Queuer) {
+	count := 1
 	for {
 		time.Sleep(time.Second)
 
-		i := struct{ Message string }{
-			Message: "Hi from producer",
-		}
-
-		if err := q.Publish(i); err != nil {
+		if err := q.Publish(fmt.Sprintf("Hi number %d", count)); err != nil {
 			log.Println("producer error:", err.Error())
 		}
+
+		count++
 	}
 }
