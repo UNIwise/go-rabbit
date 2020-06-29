@@ -91,6 +91,22 @@ func (q *BoundedRetryQueue) Publish(delivery amqp.Delivery) error {
 	return nil
 }
 
+// PublishWithoutRetryIncrement does the same as Publish but without incrementing the number of times the package has been redelivered
+func (q *BoundedRetryQueue) PublishWithoutRetryIncrement(delivery amqp.Delivery) error {
+	redeliveries, err := q.getRedeliveries(delivery)
+	if err != nil {
+		return err
+	}
+
+	if redeliveries > 0 {
+		delivery.Headers = amqp.Table{
+			"x-redelivered-count": redeliveries - 1,
+		}
+	}
+
+	return q.Publish(delivery)
+}
+
 func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
 	_, err := q.Channel.QueueDeclare(q.QueueName, true, false, false, false, amqp.Table{
 		"x-dead-letter-exchange":    q.ExchangeName,
