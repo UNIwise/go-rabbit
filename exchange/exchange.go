@@ -3,10 +3,10 @@ package exchange
 import (
 	"time"
 
+	"github.com/UNIwise/go-rabbit/queue"
 	"github.com/isayme/go-amqp-reconnect/rabbitmq"
 	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
-	"github.com/uniwise/go-rabbit/queue"
 )
 
 // Exchanger is an interface which describe the minimum methods a RabbitMQ exchange must implement

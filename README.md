@@ -17,7 +17,7 @@ import (
     "log"
     "context"
     
-    rabbit "github.com/uniwise/go-rabbit"
+    rabbit "github.com/UNIwise/go-rabbit"
 )
 
 func main() {
