@@ -12,6 +12,8 @@ The aim of this package is to make a wrapper for RabbitMQ which provides a more 
 
 ## Usage
 
+A client configured from the environment and a simple queue:
+
 ```go
 package main
 
@@ -52,6 +54,29 @@ func main() {
     }
 }
 ```
+
+You can also choose to configure the client yourself:
+
+```go
+package main
+
+import (
+    rabbit "github.com/UNIwise/go-rabbit"
+)
+
+func main() {
+    rmq, err := rabbit.New(&config.Config{
+        Host: "localhost",
+        Port: 5672,
+        User: "admin",
+        Password: "admin",
+        VHost: "",
+    })
+
+    ...
+}
+```
+
 
 See [examples](examples/) for more.
 
