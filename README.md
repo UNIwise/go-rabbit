@@ -1,14 +1,14 @@
 <img src="assets/rabbit.png" height="128" />
 
-# Rabbit - an opinionated RabbitMQ client
+# Rabbit - yet another client
 
-The aim of this package is to make a wrapper for RabbitMQ which provides:
+The aim of this package is to make a wrapper for RabbitMQ which provides a more objected orientated and opinionated approach which aims for easy queue usage, features include:
 
-- Easy configuration of the connection through environment variables
-- Auto .env file use if available
-- Auto reconnect
-- Auto queue declaration
-- Different kinds of queue types for easier usage
+- Configuration of client through environment variables
+- Auto .env detection and usage
+- Auto amqp reconnect
+- Auto queue and exchange declaration
+- Provide different kinds of queue types out of the box
 
 ## Usage
 
@@ -53,7 +53,7 @@ func main() {
 }
 ```
 
-See [examples](examples/)
+See [examples](examples/) for more.
 
 ## Queue Types
 
@@ -63,9 +63,9 @@ See [examples](examples/)
 
 ## Environment variables
 
-The client consume the following environment variables if it is created with [`NewEnvClient`](main.go):
+When you use the [`NewEnvClient`](main.go) method the following environment variables are used to configure the client:
 
-```sh
+```
 RABBITMQ_USER
 RABBITMQ_PASSWORD
 RABBITMQ_VHOST
