@@ -2,8 +2,8 @@ package client
 
 import (
 	"fmt"
-
 	// This package provides auto-reconnect
+
 	"github.com/UNIwise/go-rabbit/config"
 	"github.com/UNIwise/go-rabbit/exchange"
 	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
@@ -12,7 +12,6 @@ import (
 
 // RabbitMQClient is the interface describing a RabbitMQ wrapper
 type RabbitMQClient interface {
-	Close() error
 	Channel() (*rmq.Channel, error)
 	NewExchange(name string) (*exchange.Exchange, error)
 }
@@ -54,11 +53,6 @@ func (r *RabbitMQ) connect() error {
 	r.Connection = conn
 
 	return nil
-}
-
-// Close terminates the RabbitMQ connection
-func (r *RabbitMQ) Close() error {
-	return r.Connection.Close()
 }
 
 // Channel returns a RabbitMQ channel from the connection
