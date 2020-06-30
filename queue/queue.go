@@ -63,6 +63,30 @@ func (q *BaseQueue) Consume(ctx context.Context) (<-chan amqp.Delivery, error) {
 	return ch, nil
 }
 
+// ConsumeFunc is like consume but instead of returning a queue it calls a defined handler function
+func (q *BaseQueue) ConsumeFunc(ctx context.Context, consumeHandler func(delivery amqp.Delivery)) (<-chan amqp.Delivery, error) {
+	ch := make(chan amqp.Delivery)
+
+	deliveries, err := q.Channel.Consume(q.QueueName, "", false, false, false, false, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to initialize queue consumer")
+	}
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case d := <-deliveries:
+				go consumeHandler(d)
+				continue
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // Name returns the name of the queue
 func (q *BaseQueue) Name() string {
 	return q.QueueName
