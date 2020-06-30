@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	// ErrMaxRetries means that the item has exceeded MaxRetries and will not be queued for a new retry
-	ErrMaxRetries = errors.New("Maximum number of retries reached")
+	// ErrMaxRetriesReached means that the item has exceeded MaxRetries and will not be queued for a new retry
+	ErrMaxRetriesReached = errors.New("Maximum number of retries reached")
 )
 
 // BoundedRetryQueue is an extension of the dead letter queue where an item can be redelivered a maximum number of times
@@ -72,7 +72,7 @@ func (q *BoundedRetryQueue) Publish(delivery amqp.Delivery) error {
 	}
 
 	if redeliveries >= q.MaxRetries {
-		return ErrMaxRetries
+		return ErrMaxRetriesReached
 	}
 
 	redeliveries++
