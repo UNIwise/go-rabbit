@@ -1,15 +1,18 @@
 package exchange
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/UNIwise/go-rabbit/queue"
 	"github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
+	"github.com/streadway/amqp"
 )
 
 // Exchanger is an interface which describe the minimum methods a RabbitMQ exchange must implement
 type Exchanger interface {
+	Publish(item interface{}) error
 	NewQueue(conf *queue.QueueConfig) (*queue.Queue, error)
 	NewRetryQueue(conf *queue.DeadLetterQueueConfig) (*queue.DeadLetterQueue, error)
 	Name() string
@@ -46,6 +49,22 @@ func NewExchange(conf *Config) (*Exchange, error) {
 	}
 
 	return e, nil
+}
+
+// Publish can publish an item with a given route key to the exchange
+func (e *Exchange) Publish(routeKey string, item interface{}) error {
+	body, err := json.Marshal(item)
+	if err != nil {
+		return errors.Wrap(err, "Failed to marshal item")
+	}
+
+	if err := e.Channel.Publish(e.ExchangeName, routeKey, false, false, amqp.Publishing{
+		Body: body,
+	}); err != nil {
+		return errors.Wrap(err, "Failed to publish item to exchange")
+	}
+
+	return nil
 }
 
 // NewQueue create a new simple queue with the given configuration
