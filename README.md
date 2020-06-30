@@ -1,6 +1,6 @@
 <img src="assets/rabbit.png" height="128" />
 
-# Rabbit - yet another client
+# Rabbit - An opinionated client
 
 The aim of this package is to make a wrapper for RabbitMQ which provides a more objected orientated and opinionated approach which aims for easy queue usage, features include:
 
