@@ -1,3 +1,5 @@
+<img src="assets/rabbit.png" height="128" />
+
 # Rabbit - an opinionated RabbitMQ client
 
 The aim of this package is to make a wrapper for RabbitMQ which provides:
