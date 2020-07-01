@@ -74,7 +74,7 @@ func (e *Exchange) NewQueue(name string, prefetch int) (*queue.Queue, error) {
 		Prefetch:     prefetch,
 	})
 	if err != nil {
-		errors.Wrap(err, "Failed to initialize queue")
+		return nil, errors.Wrap(err, "Failed to initialize queue")
 	}
 
 	return q, nil
@@ -95,7 +95,7 @@ func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Durati
 		TimeToLive:   ttl,
 	})
 	if err != nil {
-		errors.Wrap(err, "Failed to initialize dead letter queue")
+		return nil, errors.Wrap(err, "Failed to initialize dead letter queue")
 	}
 
 	return q, nil
@@ -117,7 +117,7 @@ func (e *Exchange) NewBoundedRetryQueue(name string, prefetch, maxRetries int, r
 		MaxRetries:   maxRetries,
 	})
 	if err != nil {
-		errors.Wrap(err, "Failed to initialize bounded retry queue")
+		return nil, errors.Wrap(err, "Failed to initialize bounded retry queue")
 	}
 
 	return q, nil
