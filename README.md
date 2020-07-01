@@ -61,11 +61,12 @@ You can also choose to configure the client yourself:
 package main
 
 import (
+    "github.com/uniwise/go-rabbit/client"
     rabbit "github.com/uniwise/go-rabbit"
 )
 
 func main() {
-    rmq, err := rabbit.New(&config.Config{
+    rmq, err := rabbit.New(&client.Config{
         Host: "localhost",
         Port: 5672,
         User: "admin",
