@@ -2,7 +2,6 @@ package queue
 
 import (
 	"context"
-	"encoding/json"
 
 	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
@@ -21,19 +20,12 @@ type BaseQueue struct {
 	ExchangeName string
 }
 
-// Publish a json serializable item to the queue
-func (q *BaseQueue) Publish(item interface{}) error {
-	body, err := json.Marshal(item)
-	if err != nil {
-		return errors.Wrap(err, "Failed to marshal item")
-	}
-
-	err = q.Channel.Publish(q.ExchangeName, q.QueueName, false, false, amqp.Publishing{
+// Publish a body to the queue
+func (q *BaseQueue) Publish(body string) error {
+	if err := q.Channel.Publish(q.ExchangeName, q.QueueName, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
-		ContentType:  "application/json",
-		Body:         body,
-	})
-	if err != nil {
+		Body:         []byte(body),
+	}); err != nil {
 		return errors.Wrap(err, "Failed to publish to queue")
 	}
 

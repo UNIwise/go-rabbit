@@ -1,7 +1,6 @@
 package exchange
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/isayme/go-amqp-reconnect/rabbitmq"
@@ -52,14 +51,9 @@ func NewExchange(conf *Config) (*Exchange, error) {
 }
 
 // Publish can publish an item with a given route key to the exchange
-func (e *Exchange) Publish(routeKey string, item interface{}) error {
-	body, err := json.Marshal(item)
-	if err != nil {
-		return errors.Wrap(err, "Failed to marshal item")
-	}
-
+func (e *Exchange) Publish(routeKey string, body string) error {
 	if err := e.Channel.Publish(e.ExchangeName, routeKey, false, false, amqp.Publishing{
-		Body: body,
+		Body: []byte(body),
 	}); err != nil {
 		return errors.Wrap(err, "Failed to publish item to exchange")
 	}

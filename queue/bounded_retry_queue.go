@@ -61,7 +61,7 @@ func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*Boun
 	return q, nil
 }
 
-// Publish a json serializable item to the queue
+// Publish publishes a delivery to the retry queue
 // Every time an item is published to this queue it's redeliver count will be incremented
 // the count is stored in the "x-redelivered-count" header
 // If the max number of redeliveries is reached a ErrMaxRetries error will be returned
@@ -79,7 +79,6 @@ func (q *BoundedRetryQueue) Publish(delivery amqp.Delivery) error {
 
 	if err := q.Channel.Publish(q.ExchangeName, q.QueueName, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
-		ContentType:  "application/json",
 		Body:         delivery.Body,
 		Headers: amqp.Table{
 			"x-redelivered-count": redeliveries,
