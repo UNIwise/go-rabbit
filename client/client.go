@@ -4,7 +4,6 @@ import (
 	"fmt"
 	// This package provides auto-reconnect
 
-	"github.com/UNIwise/go-rabbit/config"
 	"github.com/UNIwise/go-rabbit/exchange"
 	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
@@ -18,12 +17,12 @@ type RabbitMQClient interface {
 
 // RabbitMQ is a wrapper struct for a RabbitMQ connection
 type RabbitMQ struct {
-	Config     *config.Config
+	Config     *Config
 	Connection *rmq.Connection
 }
 
 // New is the constructor for RabbitMQImpl
-func New(config *config.Config) (*RabbitMQ, error) {
+func New(config *Config) (*RabbitMQ, error) {
 	rmq := &RabbitMQ{
 		Config: config,
 	}
