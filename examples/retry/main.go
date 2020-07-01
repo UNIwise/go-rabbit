@@ -39,7 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	queue.Publish("Some item body")
+	queue.Publish([]byte("Some item body"))
 
 	consumer(queue, retryQueue)
 }

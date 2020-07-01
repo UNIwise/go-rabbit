@@ -53,7 +53,7 @@ func producer(q *queue.Queue) {
 	for {
 		time.Sleep(time.Second)
 
-		if err := q.Publish(fmt.Sprintf("Hi number %d", count)); err != nil {
+		if err := q.Publish([]byte(fmt.Sprintf("Hi number %d", count))); err != nil {
 			log.Println("producer error:", err.Error())
 		}
 

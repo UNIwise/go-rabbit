@@ -51,9 +51,9 @@ func NewExchange(conf *Config) (*Exchange, error) {
 }
 
 // Publish can publish an item with a given route key to the exchange
-func (e *Exchange) Publish(routeKey string, body string) error {
+func (e *Exchange) Publish(routeKey string, body []byte) error {
 	if err := e.Channel.Publish(e.ExchangeName, routeKey, false, false, amqp.Publishing{
-		Body: []byte(body),
+		Body: body,
 	}); err != nil {
 		return errors.Wrap(err, "Failed to publish item to exchange")
 	}

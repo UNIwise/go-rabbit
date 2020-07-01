@@ -21,10 +21,10 @@ type BaseQueue struct {
 }
 
 // Publish a body to the queue
-func (q *BaseQueue) Publish(body string) error {
+func (q *BaseQueue) Publish(body []byte) error {
 	if err := q.Channel.Publish(q.ExchangeName, q.QueueName, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
-		Body:         []byte(body),
+		Body:         body,
 	}); err != nil {
 		return errors.Wrap(err, "Failed to publish to queue")
 	}
