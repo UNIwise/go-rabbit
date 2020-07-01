@@ -4,9 +4,9 @@ import (
 	"fmt"
 	// This package provides auto-reconnect
 
-	"github.com/UNIwise/go-rabbit/exchange"
 	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
+	"github.com/uniwise/go-rabbit/exchange"
 )
 
 // RabbitMQClient is the interface describing a RabbitMQ wrapper

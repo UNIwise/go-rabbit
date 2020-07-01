@@ -21,7 +21,7 @@ import (
     "log"
     "context"
     
-    rabbit "github.com/UNIwise/go-rabbit"
+    rabbit "github.com/uniwise/go-rabbit"
 )
 
 func main() {
@@ -61,7 +61,7 @@ You can also choose to configure the client yourself:
 package main
 
 import (
-    rabbit "github.com/UNIwise/go-rabbit"
+    rabbit "github.com/uniwise/go-rabbit"
 )
 
 func main() {
