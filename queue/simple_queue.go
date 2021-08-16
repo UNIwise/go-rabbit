@@ -15,7 +15,7 @@ type QueueConfig struct {
 	QueueName    string
 	ExchangeName string
 	Prefetch     int
-	RoutingKey   string // Defaults routing key to queue name
+	RoutingKey   string // Optional: If no routing key is provided the queue name is used.
 }
 
 // NewQueue is the constructor for Queue
