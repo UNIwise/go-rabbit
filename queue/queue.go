@@ -18,11 +18,12 @@ type BaseQueue struct {
 	Channel      *rmq.Channel
 	QueueName    string
 	ExchangeName string
+	RoutingKey   string
 }
 
 // Publish a body to the queue
 func (q *BaseQueue) Publish(body []byte) error {
-	if err := q.Channel.Publish(q.ExchangeName, q.QueueName, false, false, amqp.Publishing{
+	if err := q.Channel.Publish(q.ExchangeName, q.RoutingKey, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		Body:         body,
 	}); err != nil {
