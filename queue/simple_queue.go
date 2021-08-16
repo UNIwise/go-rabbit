@@ -15,7 +15,7 @@ type QueueConfig struct {
 	QueueName    string
 	ExchangeName string
 	Prefetch     int
-	RoutingKey   string
+	RoutingKey   string // Defaults routing key to queue name
 }
 
 // NewQueue is the constructor for Queue
@@ -33,7 +33,6 @@ func NewQueue(ch *rmq.Channel, exchange string, conf *QueueConfig) (*Queue, erro
 		},
 	}
 
-	// Defaults routing key to queue name
 	if q.RoutingKey == "" {
 		q.RoutingKey = q.QueueName
 	}
