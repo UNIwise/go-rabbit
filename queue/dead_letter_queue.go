@@ -38,6 +38,7 @@ func NewDeadLetterQueue(ch *rmq.Channel, conf *DeadLetterQueueConfig) (*DeadLett
 			Channel:      ch,
 			QueueName:    conf.QueueName,
 			ExchangeName: conf.ExchangeName,
+			RoutingKey:   conf.QueueName,
 		},
 		TargetQueue: conf.TargetQueue,
 	}

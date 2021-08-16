@@ -48,6 +48,7 @@ func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*Boun
 				Channel:      ch,
 				QueueName:    conf.QueueName,
 				ExchangeName: conf.ExchangeName,
+				RoutingKey:   conf.QueueName,
 			},
 			TargetQueue: conf.TargetQueue,
 		},
