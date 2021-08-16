@@ -15,6 +15,7 @@ type QueueConfig struct {
 	QueueName    string
 	ExchangeName string
 	Prefetch     int
+	RoutingKey   string // Optional: If no routing key is provided the queue name is used.
 }
 
 // NewQueue is the constructor for Queue
@@ -28,7 +29,12 @@ func NewQueue(ch *rmq.Channel, exchange string, conf *QueueConfig) (*Queue, erro
 			Channel:      ch,
 			QueueName:    conf.QueueName,
 			ExchangeName: exchange,
+			RoutingKey:   conf.RoutingKey,
 		},
+	}
+
+	if q.RoutingKey == "" {
+		q.RoutingKey = q.QueueName
 	}
 
 	if err := q.declare(conf.Prefetch); err != nil {
@@ -49,7 +55,7 @@ func (q *Queue) declare(prefetch int) error {
 		return errors.Wrapf(err, "Failed to set prefetch for queue")
 	}
 
-	err = q.Channel.QueueBind(q.QueueName, q.QueueName, q.ExchangeName, false, nil)
+	err = q.Channel.QueueBind(q.QueueName, q.RoutingKey, q.ExchangeName, false, nil)
 	if err != nil {
 		return errors.Wrap(err, "Failed bind queue to exchange")
 	}

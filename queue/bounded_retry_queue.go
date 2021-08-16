@@ -48,6 +48,7 @@ func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*Boun
 				Channel:      ch,
 				QueueName:    conf.QueueName,
 				ExchangeName: conf.ExchangeName,
+				RoutingKey:   conf.QueueName,
 			},
 			TargetQueue: conf.TargetQueue,
 		},
@@ -121,7 +122,7 @@ func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
 		return errors.Wrapf(err, "Failed to set prefetch for retry queue")
 	}
 
-	err = q.Channel.QueueBind(q.QueueName, q.QueueName, q.ExchangeName, false, nil)
+	err = q.Channel.QueueBind(q.QueueName, q.RoutingKey, q.ExchangeName, false, nil)
 	if err != nil {
 		return errors.Wrap(err, "Failed bind retry queue to exchange")
 	}
