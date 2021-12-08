@@ -5,12 +5,17 @@ import (
 	"log"
 	"time"
 
-	rabbit "github.com/uniwise/go-rabbit"
+	"github.com/uniwise/go-rabbit/client"
 	"github.com/uniwise/go-rabbit/queue"
 )
 
 func main() {
-	rmq, err := rabbit.NewEnvClient()
+	// rmq, err := rabbit.NewEnvClient()
+	conn, err := client.NewConnection("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		log.Fatal(err)
+	}
+	rmq, err := client.NewClient(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,7 +25,14 @@ func main() {
 		log.Fatal(err)
 	}
 
+	ch, err := rmq.Channel()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer ch.Close()
+
 	queue, err := ex.NewQueue(
+		ch,
 		"worker", // Queue name
 		10,       // Prefetch
 	)
@@ -29,6 +41,7 @@ func main() {
 	}
 
 	retryQueue, err := ex.NewBoundedRetryQueue(
+		ch,
 		"worker_retry", // Queue name
 		10,             // Prefetch
 		5,              // Max retries

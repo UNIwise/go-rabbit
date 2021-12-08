@@ -8,6 +8,10 @@ import (
 	"github.com/streadway/amqp"
 )
 
+var (
+	ErrConsumerCtxClosed = errors.New("Consumer context closed")
+)
+
 // NamedQueue is an interface describing queues which can return their name
 type NamedQueue interface {
 	Name() string
@@ -33,51 +37,25 @@ func (q *BaseQueue) Publish(body []byte) error {
 	return nil
 }
 
-// Consume deliveries from the queue
-func (q *BaseQueue) Consume(ctx context.Context) (<-chan amqp.Delivery, error) {
-	ch := make(chan amqp.Delivery)
-
-	deliveries, err := q.Channel.Consume(q.QueueName, "", false, false, false, false, nil)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to initialize queue consumer")
-	}
-
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case ch <- <-deliveries:
-				continue
-			}
-		}
-	}()
-
-	return ch, nil
-}
+type Handler func(ctx context.Context, delivery amqp.Delivery)
 
 // ConsumeFunc is like consume but instead of returning a queue it calls a defined handler function
-func (q *BaseQueue) ConsumeFunc(ctx context.Context, consumeHandler func(delivery amqp.Delivery)) (<-chan amqp.Delivery, error) {
-	ch := make(chan amqp.Delivery)
-
-	deliveries, err := q.Channel.Consume(q.QueueName, "", false, false, false, false, nil)
+func (q *BaseQueue) Consume(ctx context.Context, ch *rmq.Channel, consumeHandler Handler) error {
+	deliveries, err := ch.Consume(q.QueueName, "", false, false, false, false, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to initialize queue consumer")
+		return errors.Wrap(err, "Failed to initialize queue consumer")
 	}
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case d := <-deliveries:
-				go consumeHandler(d)
-				continue
-			}
-		}
-	}()
+	for {
+		select {
+		case <-ctx.Done():
+			return errors.Wrap(ctx.Err(), "Consumer context closed")
+		case d := <-deliveries:
+			consumeHandler(ctx, d)
 
-	return ch, nil
+			continue
+		}
+	}
 }
 
 // Name returns the name of the queue

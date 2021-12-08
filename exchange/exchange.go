@@ -19,40 +19,23 @@ type Exchanger interface {
 
 // Exchange is a wrapper for RabbitMQ exchanges
 type Exchange struct {
-	ExchangeName string
-	Connection   *rabbitmq.Connection
-	Channel      *rabbitmq.Channel
-}
-
-// Config is the configuration which the constructor NewExchange needs
-type Config struct {
-	Connection   *rabbitmq.Connection
+	// Connection   *rabbitmq.Connection
 	ExchangeName string
 }
 
-// NewExchange is the constructor of Exchange
-func NewExchange(conf *Config) (*Exchange, error) {
-	ch, err := conf.Connection.Channel()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to initialize channel for exchange")
+func NewExchange(ch *rabbitmq.Channel, name string) (*Exchange, error) {
+	if err := ch.ExchangeDeclare(name, "direct", true, false, false, false, nil); err != nil {
+		return nil, errors.Wrap(err, "Failed to declare exchange")
 	}
 
-	e := &Exchange{
-		ExchangeName: conf.ExchangeName,
-		Connection:   conf.Connection,
-		Channel:      ch,
-	}
-
-	if err := e.declare(); err != nil {
-		return nil, err
-	}
-
-	return e, nil
+	return &Exchange{
+		ExchangeName: name,
+	}, nil
 }
 
 // Publish can publish an item with a given route key to the exchange
-func (e *Exchange) Publish(routeKey string, body []byte) error {
-	if err := e.Channel.Publish(e.ExchangeName, routeKey, false, false, amqp.Publishing{
+func (e *Exchange) Publish(ch *rabbitmq.Channel, routeKey string, body []byte) error {
+	if err := ch.Publish(e.ExchangeName, routeKey, false, false, amqp.Publishing{
 		Body: body,
 	}); err != nil {
 		return errors.Wrap(err, "Failed to publish item to exchange")
@@ -62,12 +45,7 @@ func (e *Exchange) Publish(routeKey string, body []byte) error {
 }
 
 // NewQueue create a new simple queue with the given configuration
-func (e *Exchange) NewQueue(name string, prefetch int) (*queue.Queue, error) {
-	ch, err := e.Connection.Channel()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create channel for queue")
-	}
-
+func (e *Exchange) NewQueue(ch *rabbitmq.Channel, name string, prefetch int) (*queue.Queue, error) {
 	q, err := queue.NewQueue(ch, e.ExchangeName, &queue.QueueConfig{
 		ExchangeName: e.ExchangeName,
 		QueueName:    name,
@@ -81,12 +59,7 @@ func (e *Exchange) NewQueue(name string, prefetch int) (*queue.Queue, error) {
 }
 
 // NewDeadLetterQueue create a new dead letter queue with the given configuration
-func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Duration, targetQueue queue.NamedQueue) (*queue.DeadLetterQueue, error) {
-	ch, err := e.Connection.Channel()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create channel for retry queue")
-	}
-
+func (e *Exchange) NewDeadLetterQueue(ch *rabbitmq.Channel, name string, prefetch int, ttl time.Duration, targetQueue queue.NamedQueue) (*queue.DeadLetterQueue, error) {
 	q, err := queue.NewDeadLetterQueue(ch, &queue.DeadLetterQueueConfig{
 		ExchangeName: e.ExchangeName,
 		Prefetch:     prefetch,
@@ -102,12 +75,7 @@ func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Durati
 }
 
 // NewBoundedRetryQueue create a new bounded retry queue with the given configuration
-func (e *Exchange) NewBoundedRetryQueue(name string, prefetch, maxRetries int, retryDelay time.Duration, targetQueue queue.NamedQueue) (*queue.BoundedRetryQueue, error) {
-	ch, err := e.Connection.Channel()
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed to create channel for retry queue")
-	}
-
+func (e *Exchange) NewBoundedRetryQueue(ch *rabbitmq.Channel, name string, prefetch, maxRetries int, retryDelay time.Duration, targetQueue queue.NamedQueue) (*queue.BoundedRetryQueue, error) {
 	q, err := queue.NewBoundedRetryQueue(ch, &queue.BoundedRetryQueueConfig{
 		ExchangeName: e.ExchangeName,
 		Prefetch:     prefetch,
@@ -126,13 +94,4 @@ func (e *Exchange) NewBoundedRetryQueue(name string, prefetch, maxRetries int, r
 // Name returns the name of the exchange
 func (e *Exchange) Name() string {
 	return e.ExchangeName
-}
-
-func (e *Exchange) declare() error {
-	err := e.Channel.ExchangeDeclare(e.ExchangeName, "direct", true, false, false, false, nil)
-	if err != nil {
-		return errors.Wrapf(err, "Failed to declare exchange")
-	}
-
-	return nil
 }
