@@ -61,17 +61,17 @@ func consumer(q *queue.Queue, r *queue.BoundedRetryQueue) {
 	ctx := context.Background()
 	defer ctx.Done()
 
-	ch, err := q.Consume(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// ch, err := q.Consume(ctx)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	for delivery := range ch {
-		log.Println("consumer received: redelivered count", delivery.Headers["x-redelivered-count"])
-		delivery.Ack(false) // Remember to ack the delivery in the other queue!
+	// for delivery := range ch {
+	// 	log.Println("consumer received: redelivered count", delivery.Headers["x-redelivered-count"])
+	// 	delivery.Ack(false) // Remember to ack the delivery in the other queue!
 
-		if err := r.Publish(delivery); err != nil {
-			log.Print(err)
-		}
-	}
+	// 	if err := r.Publish(delivery); err != nil {
+	// 		log.Print(err)
+	// 	}
+	// }
 }

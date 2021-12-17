@@ -8,9 +8,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-var (
-	ErrConsumerCtxClosed = errors.New("Consumer context closed")
-)
+var ErrConsumerCtxClosed = errors.New("Consumer context closed")
 
 // NamedQueue is an interface describing queues which can return their name
 type NamedQueue interface {
@@ -39,7 +37,7 @@ func (q *BaseQueue) Publish(body []byte) error {
 
 type Handler func(ctx context.Context, delivery amqp.Delivery)
 
-// ConsumeFunc is like consume but instead of returning a queue it calls a defined handler function
+// Consume is like consume but instead of returning a queue it calls a defined handler function
 func (q *BaseQueue) Consume(ctx context.Context, ch *rmq.Channel, consumeHandler Handler) error {
 	deliveries, err := ch.Consume(q.QueueName, "", false, false, false, false, nil)
 	if err != nil {

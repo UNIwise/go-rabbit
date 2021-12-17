@@ -6,12 +6,15 @@ import (
 	"log"
 	"time"
 
+	"github.com/isayme/go-amqp-reconnect/rabbitmq"
 	rabbit "github.com/uniwise/go-rabbit"
+	"github.com/uniwise/go-rabbit/client"
 	"github.com/uniwise/go-rabbit/queue"
 )
 
 func main() {
-	rmq, err := rabbit.NewEnvClient()
+	// rmq, err := rabbit.NewEnvClient()
+	rmq, err := rabbit.New(&client.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
