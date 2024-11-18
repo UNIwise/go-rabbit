@@ -57,12 +57,10 @@ func (q *BaseQueue) Consume(ctx context.Context) (<-chan amqp.Delivery, error) {
 }
 
 // ConsumeFunc is like consume but instead of returning a queue it calls a defined handler function
-func (q *BaseQueue) ConsumeFunc(ctx context.Context, consumeHandler func(delivery amqp.Delivery)) (<-chan amqp.Delivery, error) {
-	ch := make(chan amqp.Delivery)
-
+func (q *BaseQueue) ConsumeFunc(ctx context.Context, consumeHandler func(delivery amqp.Delivery)) error {
 	deliveries, err := q.Channel.Consume(q.QueueName, "", false, false, false, false, nil)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to initialize queue consumer")
+		return errors.Wrap(err, "Failed to initialize queue consumer")
 	}
 
 	go func() {
@@ -77,7 +75,7 @@ func (q *BaseQueue) ConsumeFunc(ctx context.Context, consumeHandler func(deliver
 		}
 	}()
 
-	return ch, nil
+	return nil
 }
 
 // Name returns the name of the queue
