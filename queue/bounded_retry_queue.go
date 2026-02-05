@@ -118,17 +118,8 @@ func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
 	if err != nil {
 		// Check if error is due to queue existing with different settings (error code 406 PRECONDITION_FAILED)
 		if amqpErr, ok := err.(*amqp.Error); ok && amqpErr.Code == 406 {
-			// Delete the existing queue and re-declare with new settings.
-			// WARNING: This will delete any messages currently in the queue.
-			if _, delErr := q.Channel.QueueDelete(q.QueueName, false, false, false); delErr != nil {
-				return errors.Wrap(delErr, "Failed to delete retry queue with conflicting settings")
-			}
-			
-			// Re-declare the queue with new settings
-			_, err = q.Channel.QueueDeclare(q.QueueName, true, false, false, false, args)
-			if err != nil {
-				return errors.Wrap(err, "Failed to re-declare retry queue after deletion")
-			}
+			// Queue exists with different settings. Accept the existing queue as-is to avoid data loss.
+			// Note: The queue will retain its existing configuration rather than the requested one.
 		} else {
 			return errors.Wrap(err, "Failed to declare retry queue")
 		}
