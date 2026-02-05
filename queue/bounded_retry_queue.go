@@ -108,13 +108,29 @@ func (q *BoundedRetryQueue) PublishWithoutRetryIncrement(delivery amqp.Delivery)
 }
 
 func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
-	_, err := q.Channel.QueueDeclare(q.QueueName, true, false, false, false, amqp.Table{
+	args := amqp.Table{
 		"x-dead-letter-exchange":    q.ExchangeName,
 		"x-dead-letter-routing-key": q.TargetQueue.Name(),
 		"x-message-ttl":             ttl.Milliseconds(),
-	})
+	}
+	
+	_, err := q.Channel.QueueDeclare(q.QueueName, true, false, false, false, args)
 	if err != nil {
-		return errors.Wrap(err, "Failed to declare retry queue")
+		// Check if error is due to queue existing with different settings (error code 406)
+		if amqpErr, ok := err.(*amqp.Error); ok && amqpErr.Code == 406 {
+			// Delete the existing queue and re-declare with new settings
+			if _, delErr := q.Channel.QueueDelete(q.QueueName, false, false, false); delErr != nil {
+				return errors.Wrap(delErr, "Failed to delete retry queue with conflicting settings")
+			}
+			
+			// Re-declare the queue with new settings
+			_, err = q.Channel.QueueDeclare(q.QueueName, true, false, false, false, args)
+			if err != nil {
+				return errors.Wrap(err, "Failed to re-declare retry queue after deletion")
+			}
+		} else {
+			return errors.Wrap(err, "Failed to declare retry queue")
+		}
 	}
 
 	err = q.Channel.Qos(prefetch, 0, false)

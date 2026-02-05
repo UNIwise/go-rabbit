@@ -3,6 +3,7 @@ package queue
 import (
 	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
+	"github.com/streadway/amqp"
 )
 
 // Queue is the simplest queue abstraction of RabbitMQ
@@ -47,7 +48,21 @@ func NewQueue(ch *rmq.Channel, exchange string, conf *QueueConfig) (*Queue, erro
 func (q *Queue) declare(prefetch int) error {
 	_, err := q.Channel.QueueDeclare(q.QueueName, true, false, false, false, nil)
 	if err != nil {
-		return errors.Wrap(err, "Failed to declare queue")
+		// Check if error is due to queue existing with different settings (error code 406)
+		if amqpErr, ok := err.(*amqp.Error); ok && amqpErr.Code == 406 {
+			// Delete the existing queue and re-declare with new settings
+			if _, delErr := q.Channel.QueueDelete(q.QueueName, false, false, false); delErr != nil {
+				return errors.Wrap(delErr, "Failed to delete queue with conflicting settings")
+			}
+			
+			// Re-declare the queue with new settings
+			_, err = q.Channel.QueueDeclare(q.QueueName, true, false, false, false, nil)
+			if err != nil {
+				return errors.Wrap(err, "Failed to re-declare queue after deletion")
+			}
+		} else {
+			return errors.Wrap(err, "Failed to declare queue")
+		}
 	}
 
 	err = q.Channel.Qos(prefetch, 0, false)
