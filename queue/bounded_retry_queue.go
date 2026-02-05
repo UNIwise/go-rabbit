@@ -116,9 +116,10 @@ func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
 	
 	_, err := q.Channel.QueueDeclare(q.QueueName, true, false, false, false, args)
 	if err != nil {
-		// Check if error is due to queue existing with different settings (error code 406)
+		// Check if error is due to queue existing with different settings (error code 406 PRECONDITION_FAILED)
 		if amqpErr, ok := err.(*amqp.Error); ok && amqpErr.Code == 406 {
-			// Delete the existing queue and re-declare with new settings
+			// Delete the existing queue and re-declare with new settings.
+			// WARNING: This will delete any messages currently in the queue.
 			if _, delErr := q.Channel.QueueDelete(q.QueueName, false, false, false); delErr != nil {
 				return errors.Wrap(delErr, "Failed to delete retry queue with conflicting settings")
 			}
