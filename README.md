@@ -86,6 +86,7 @@ See [examples](examples/) for more.
 - Simple Queue
 - Dead Letter Queue
 - Bounded Retry Queue
+- Backoff Queue
 
 ## Environment variables
 
