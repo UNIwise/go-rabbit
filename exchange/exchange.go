@@ -101,6 +101,27 @@ func (e *Exchange) NewDeadLetterQueue(name string, prefetch int, ttl time.Durati
 	return q, nil
 }
 
+// NewBackoffQueue creates a new backoff queue with one dead-letter stage queue per interval.
+// Each interval must be unique; duplicate values will be rejected with an error.
+func (e *Exchange) NewBackoffQueue(name string, intervals []time.Duration, targetQueue queue.NamedQueue) (*queue.BackoffQueue, error) {
+	ch, err := e.Connection.Channel()
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create channel for backoff queue")
+	}
+
+	q, err := queue.NewBackoffQueue(ch, &queue.BackoffQueueConfig{
+		ExchangeName: e.ExchangeName,
+		QueueName:    name,
+		Intervals:    intervals,
+		TargetQueue:  targetQueue,
+	})
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to initialize backoff queue")
+	}
+
+	return q, nil
+}
+
 // NewBoundedRetryQueue create a new bounded retry queue with the given configuration
 func (e *Exchange) NewBoundedRetryQueue(name string, prefetch, maxRetries int, retryDelay time.Duration, targetQueue queue.NamedQueue) (*queue.BoundedRetryQueue, error) {
 	ch, err := e.Connection.Channel()
