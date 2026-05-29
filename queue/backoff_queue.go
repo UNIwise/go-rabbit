@@ -39,10 +39,10 @@ type BackoffQueueConfig struct {
 // queue names and will be rejected with an error.
 func NewBackoffQueue(ch *rmq.Channel, conf *BackoffQueueConfig) (*BackoffQueue, error) {
 	if len(conf.Intervals) == 0 {
-		return nil, errors.New("Intervals must contain at least one duration")
+		return nil, errors.New("intervals must contain at least one duration")
 	}
 	if conf.TargetQueue == nil {
-		return nil, errors.New("TargetQueue can't be nil")
+		return nil, errors.New("targetQueue can't be nil")
 	}
 
 	seen := make(map[string]struct{}, len(conf.Intervals))
