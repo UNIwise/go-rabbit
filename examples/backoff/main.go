@@ -30,6 +30,7 @@ func main() {
 
 	// Each failed message will wait 1 s, then 5 s, then 30 s before being redelivered.
 	// After the third attempt the consumer receives ErrBackoffExhausted.
+	// The stage queues are automatically created and bound
 	backoffQueue, err := ex.NewBackoffQueue(
 		"worker_retry", // Base queue name
 		[]time.Duration{1 * time.Second, 5 * time.Second, 30 * time.Second}, // Intervals
