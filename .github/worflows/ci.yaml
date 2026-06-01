@@ -1,0 +1,17 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  release:
+    types: [published]
+  pull_request: {}
+
+jobs:
+  golang:
+    uses: UNIwise/workflows/.github/workflows/golang.yaml@master
+    secrets: inherit
+    with:
+      go-version: 1.26
+      golangci-lint-version: v2.11.4
