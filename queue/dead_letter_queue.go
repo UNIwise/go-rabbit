@@ -3,9 +3,9 @@ package queue
 import (
 	"time"
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 // DeadLetterQueue redelivers messages to a target queue after a provided TTL
@@ -25,7 +25,7 @@ type DeadLetterQueueConfig struct {
 }
 
 // NewDeadLetterQueue is the constructor for DeadLetterQueue
-func NewDeadLetterQueue(ch *rmq.Channel, conf *DeadLetterQueueConfig) (*DeadLetterQueue, error) {
+func NewDeadLetterQueue(ch *reconnect.Channel, conf *DeadLetterQueueConfig) (*DeadLetterQueue, error) {
 	if conf.Prefetch < 0 {
 		return nil, errors.New("Prefetch can't be less than 0")
 	}

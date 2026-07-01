@@ -3,9 +3,9 @@ package exchange
 import (
 	"time"
 
-	"github.com/isayme/go-amqp-reconnect/rabbitmq"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 	"github.com/uniwise/go-rabbit/queue"
 )
 
@@ -20,13 +20,13 @@ type Exchanger interface {
 // Exchange is a wrapper for RabbitMQ exchanges
 type Exchange struct {
 	ExchangeName string
-	Connection   *rabbitmq.Connection
-	Channel      *rabbitmq.Channel
+	Connection   *reconnect.Connection
+	Channel      *reconnect.Channel
 }
 
 // Config is the configuration which the constructor NewExchange needs
 type Config struct {
-	Connection   *rabbitmq.Connection
+	Connection   *reconnect.Connection
 	ExchangeName string
 }
 
