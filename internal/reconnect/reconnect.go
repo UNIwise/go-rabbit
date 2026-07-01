@@ -5,6 +5,7 @@
 package reconnect
 
 import (
+	"math"
 	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -23,15 +24,13 @@ type Connection struct {
 //   - InternalError (541): broker internal error
 //   - FrameError (501): TCP-level disconnects (io.EOF, ECONNRESET, hard kills)
 //
-// The library retries up to 60 times with a 3 s interval between attempts,
-// giving a 3-minute window for broker restarts.
+// Matches the old isayme/go-amqp-reconnect behaviour: retries indefinitely
+// with a 3 s delay between attempts.
 func Dial(url string) (*Connection, error) {
 	conn, err := amqp.DialConfig(url, amqp.Config{
 		Recovery: &amqp.Recovery{
 			ReconnectionConfig: &amqp.ReconnectionConfig{
-				// 60 retries × 3 s ≈ 3-minute recovery window — enough for
-				// most broker restarts including slow Docker container starts.
-				MaxRetryCount: 60,
+				MaxRetryCount: math.MaxInt,
 				RetryInterval: 3 * time.Second,
 				// Include FrameError so hard TCP kills (e.g. container restart)
 				// are also treated as recoverable.
