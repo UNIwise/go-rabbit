@@ -14,6 +14,7 @@ import (
 //  1. A message can be re-queued up to MaxRetries times.
 //  2. On the (MaxRetries+1)th Publish call ErrMaxRetriesReached is returned.
 func TestBoundedRetryQueue(t *testing.T) {
+	t.Parallel()
 	const (
 		maxRetries = 2
 		retryDelay = 500 * time.Millisecond

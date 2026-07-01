@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"os"
 	"strconv"
 	"testing"
 
@@ -13,17 +14,37 @@ import (
 	"github.com/uniwise/go-rabbit/client"
 )
 
-// newTestClient spins up a RabbitMQ container and returns a connected client.
-// The container is terminated when the test ends.
-func newTestClient(t *testing.T) client.RabbitMQClient {
-	t.Helper()
-	c, _ := newTestSetup(t)
-	return c
+// sharedContainer is started once in TestMain and reused by all tests that do
+// not need to control the broker lifecycle themselves.
+var sharedContainer *tc_rabbitmq.RabbitMQContainer
+
+func TestMain(m *testing.M) {
+	ctx := context.Background()
+
+	var err error
+	sharedContainer, err = tc_rabbitmq.Run(ctx, "rabbitmq:3-alpine")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to start shared RabbitMQ container: %v\n", err)
+		os.Exit(1)
+	}
+
+	code := m.Run()
+
+	_ = sharedContainer.Terminate(ctx)
+	os.Exit(code)
 }
 
-// newTestSetup spins up a RabbitMQ container and returns both the connected
-// client and the container. Use this when the test needs to stop/restart the
-// container to exercise reconnect behaviour.
+// newTestClient returns a client connected to the shared container. Each test
+// gets its own AMQP connection so they are fully isolated; unique queue/exchange
+// names (via uniqueName) prevent any naming collisions between parallel tests.
+func newTestClient(t *testing.T) client.RabbitMQClient {
+	t.Helper()
+	return clientFromContainer(t, sharedContainer)
+}
+
+// newTestSetup spins up a dedicated RabbitMQ container and returns both the
+// connected client and the container. Use this only when the test needs to
+// control the broker lifecycle (e.g. reconnect tests).
 func newTestSetup(t *testing.T) (client.RabbitMQClient, *tc_rabbitmq.RabbitMQContainer) {
 	t.Helper()
 	ctx := context.Background()
@@ -37,7 +58,6 @@ func newTestSetup(t *testing.T) (client.RabbitMQClient, *tc_rabbitmq.RabbitMQCon
 }
 
 // clientFromContainer builds a RabbitMQClient from an already-running container.
-// Useful when reconnecting to a restarted container.
 func clientFromContainer(t *testing.T, container *tc_rabbitmq.RabbitMQContainer) client.RabbitMQClient {
 	t.Helper()
 	ctx := context.Background()

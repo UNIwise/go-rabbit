@@ -82,6 +82,7 @@ func TestReconnect_ConnectionRecovery(t *testing.T) {
 // the broker (e.g. a channel-level error), the amqp091 recovery reopens it and
 // subsequent operations on the same channel succeed.
 func TestReconnect_ChannelRecovery(t *testing.T) {
+	t.Parallel()
 	rmq, _ := newTestSetup(t)
 
 	// Open a raw channel through the client so we can close it deliberately.

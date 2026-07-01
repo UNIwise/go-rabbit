@@ -14,6 +14,7 @@ import (
 // queues and eventually return to the target queue, and that ErrBackoffExhausted
 // is returned once all stages are consumed.
 func TestBackoffQueue(t *testing.T) {
+	t.Parallel()
 	intervals := []time.Duration{
 		300 * time.Millisecond,
 		500 * time.Millisecond,

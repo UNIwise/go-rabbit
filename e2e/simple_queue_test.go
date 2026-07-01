@@ -11,6 +11,7 @@ import (
 )
 
 func TestSimpleQueue_PublishConsume(t *testing.T) {
+	t.Parallel()
 	rmq := newTestClient(t)
 
 	ex, err := rmq.NewExchange(uniqueName(t, "exchange"))
@@ -50,6 +51,7 @@ func TestSimpleQueue_PublishConsume(t *testing.T) {
 }
 
 func TestSimpleQueue_ConsumeFunc(t *testing.T) {
+	t.Parallel()
 	rmq := newTestClient(t)
 
 	ex, err := rmq.NewExchange(uniqueName(t, "exchange"))

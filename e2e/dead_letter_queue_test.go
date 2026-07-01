@@ -12,6 +12,7 @@ import (
 // TestDeadLetterQueue verifies that a message published to a dead-letter queue
 // is automatically re-routed to the target queue after its TTL expires.
 func TestDeadLetterQueue(t *testing.T) {
+	t.Parallel()
 	const ttl = 500 * time.Millisecond
 
 	rmq := newTestClient(t)
