@@ -21,6 +21,9 @@ import (
 // This exercises the native amqp091-go recovery feature enabled by
 // internal/reconnect.Dial via amqp.Config{Recovery: &amqp.Recovery{}}.
 func TestReconnect_ConnectionRecovery(t *testing.T) {
+	// Do NOT call t.Parallel() — this test calls rabbitmqctl stop_app/start_app
+	// on the shared container. Running sequentially ensures the broker is fully
+	// restored before the parallel tests start.
 	ctx := context.Background()
 
 	rmq, container := newTestSetup(t)
@@ -63,11 +66,11 @@ func TestReconnect_ConnectionRecovery(t *testing.T) {
 	require.Equal(t, 0, exitCode, "rabbitmqctl start_app failed")
 
 	// ── Phase 4: verify operation after reconnect ─────────────────────────
-	// amqp091 recovery retries with a 3 s interval; poll until publish works.
+	// amqp091 recovery retries with a 1 s interval; poll until publish works.
 	t.Log("waiting for recovery and publishing after reconnect")
 	require.Eventually(t, func() bool {
 		return q.Publish([]byte("after-reconnect")) == nil
-	}, 30*time.Second, 500*time.Millisecond, "publish never succeeded after reconnect")
+	}, 15*time.Second, 200*time.Millisecond, "publish never succeeded after reconnect")
 
 	select {
 	case d := <-deliveries:
@@ -83,7 +86,7 @@ func TestReconnect_ConnectionRecovery(t *testing.T) {
 // subsequent operations on the same channel succeed.
 func TestReconnect_ChannelRecovery(t *testing.T) {
 	t.Parallel()
-	rmq, _ := newTestSetup(t)
+	rmq := newTestClient(t)
 
 	// Open a raw channel through the client so we can close it deliberately.
 	rawCh, err := rmq.Channel()

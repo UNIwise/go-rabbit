@@ -14,8 +14,10 @@ import (
 	"github.com/uniwise/go-rabbit/client"
 )
 
-// sharedContainer is started once in TestMain and reused by all tests that do
-// not need to control the broker lifecycle themselves.
+// sharedContainer is started once in TestMain and reused by every test.
+// TestReconnect_ConnectionRecovery calls rabbitmqctl stop_app/start_app on it
+// and runs sequentially (no t.Parallel()), so the broker is fully restored
+// before any parallel test starts.
 var sharedContainer *tc_rabbitmq.RabbitMQContainer
 
 func TestMain(m *testing.M) {
@@ -24,7 +26,7 @@ func TestMain(m *testing.M) {
 	var err error
 	sharedContainer, err = tc_rabbitmq.Run(ctx, "rabbitmq:3-alpine")
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to start shared RabbitMQ container: %v\n", err)
+		fmt.Fprintf(os.Stderr, "failed to start RabbitMQ container: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -34,27 +36,18 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// newTestClient returns a client connected to the shared container. Each test
-// gets its own AMQP connection so they are fully isolated; unique queue/exchange
-// names (via uniqueName) prevent any naming collisions between parallel tests.
+// newTestClient returns a client connected to the shared container.
+// Each test gets its own AMQP connection; unique names prevent collisions.
 func newTestClient(t *testing.T) client.RabbitMQClient {
 	t.Helper()
 	return clientFromContainer(t, sharedContainer)
 }
 
-// newTestSetup spins up a dedicated RabbitMQ container and returns both the
-// connected client and the container. Use this only when the test needs to
-// control the broker lifecycle (e.g. reconnect tests).
+// newTestSetup returns a client and the shared container.
+// The caller is responsible for not running in parallel if it mutates broker state.
 func newTestSetup(t *testing.T) (client.RabbitMQClient, *tc_rabbitmq.RabbitMQContainer) {
 	t.Helper()
-	ctx := context.Background()
-
-	container, err := tc_rabbitmq.Run(ctx, "rabbitmq:3-alpine")
-	require.NoError(t, err)
-	t.Cleanup(func() { _ = container.Terminate(ctx) })
-
-	c := clientFromContainer(t, container)
-	return c, container
+	return clientFromContainer(t, sharedContainer), sharedContainer
 }
 
 // clientFromContainer builds a RabbitMQClient from an already-running container.

@@ -24,14 +24,15 @@ type Connection struct {
 //   - InternalError (541): broker internal error
 //   - FrameError (501): TCP-level disconnects (io.EOF, ECONNRESET, hard kills)
 //
-// Matches the old isayme/go-amqp-reconnect behaviour: retries indefinitely
-// with a 3 s delay between attempts.
+// Matches the old isayme/go-amqp-reconnect behaviour: retries indefinitely.
+// Uses a 1 s interval (the old package also used 3 s, but faster reconnects
+// are strictly better for clients).
 func Dial(url string) (*Connection, error) {
 	conn, err := amqp.DialConfig(url, amqp.Config{
 		Recovery: &amqp.Recovery{
 			ReconnectionConfig: &amqp.ReconnectionConfig{
 				MaxRetryCount: math.MaxInt,
-				RetryInterval: 3 * time.Second,
+				RetryInterval: 1 * time.Second,
 				// Include FrameError so hard TCP kills (e.g. container restart)
 				// are also treated as recoverable.
 				RecoverableErrorCodes: []int{
