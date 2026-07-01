@@ -17,11 +17,30 @@ import (
 // The container is terminated when the test ends.
 func newTestClient(t *testing.T) client.RabbitMQClient {
 	t.Helper()
+	c, _ := newTestSetup(t)
+	return c
+}
+
+// newTestSetup spins up a RabbitMQ container and returns both the connected
+// client and the container. Use this when the test needs to stop/restart the
+// container to exercise reconnect behaviour.
+func newTestSetup(t *testing.T) (client.RabbitMQClient, *tc_rabbitmq.RabbitMQContainer) {
+	t.Helper()
 	ctx := context.Background()
 
 	container, err := tc_rabbitmq.Run(ctx, "rabbitmq:3-alpine")
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = container.Terminate(ctx) })
+
+	c := clientFromContainer(t, container)
+	return c, container
+}
+
+// clientFromContainer builds a RabbitMQClient from an already-running container.
+// Useful when reconnecting to a restarted container.
+func clientFromContainer(t *testing.T, container *tc_rabbitmq.RabbitMQContainer) client.RabbitMQClient {
+	t.Helper()
+	ctx := context.Background()
 
 	amqpURL, err := container.AmqpURL(ctx)
 	require.NoError(t, err)
@@ -33,7 +52,6 @@ func newTestClient(t *testing.T) client.RabbitMQClient {
 	require.NoError(t, err)
 
 	password, _ := u.User.Password()
-	// Strip leading "/" from path; empty string means default vhost
 	vhost := u.Path
 	if len(vhost) > 0 && vhost[0] == '/' {
 		vhost = vhost[1:]
@@ -47,7 +65,6 @@ func newTestClient(t *testing.T) client.RabbitMQClient {
 		VHost:    vhost,
 	})
 	require.NoError(t, err, "failed to connect to RabbitMQ")
-
 	return c
 }
 
