@@ -11,6 +11,8 @@ import (
 
 // RabbitMQClient is the interface describing a RabbitMQ wrapper
 type RabbitMQClient interface {
+	Config() *Config
+	Connection() *rmq.Connection
 	Channel() (*rmq.Channel, error)
 	NewExchange(name string) (*exchange.Exchange, error)
 }
