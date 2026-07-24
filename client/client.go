@@ -17,14 +17,14 @@ type RabbitMQClient interface {
 
 // RabbitMQ is a wrapper struct for a RabbitMQ connection
 type RabbitMQ struct {
-	Config     *Config
-	Connection *rmq.Connection
+	config      *Config
+	connectionn *rmq.Connection
 }
 
 // New is the constructor for RabbitMQImpl
 func New(config *Config) (*RabbitMQ, error) {
 	rmq := &RabbitMQ{
-		Config: config,
+		config: config,
 	}
 
 	if err := rmq.connect(); err != nil {
@@ -37,11 +37,11 @@ func New(config *Config) (*RabbitMQ, error) {
 // Connect opens the connect to RabbitMQ
 func (r *RabbitMQ) connect() error {
 	connStr := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
-		r.Config.User,
-		r.Config.Password,
-		r.Config.Host,
-		r.Config.Port,
-		r.Config.VHost,
+		r.config.User,
+		r.config.Password,
+		r.config.Host,
+		r.config.Port,
+		r.config.VHost,
 	)
 
 	conn, err := rmq.Dial(connStr)
@@ -49,14 +49,24 @@ func (r *RabbitMQ) connect() error {
 		return err
 	}
 
-	r.Connection = conn
+	r.connectionn = conn
 
 	return nil
 }
 
+// Config returns the configuration used to create the RabbitMQ client
+func (r *RabbitMQ) Config() *Config {
+	return r.config
+}
+
+// Connection returns the underlying RabbitMQ connection
+func (r *RabbitMQ) Connection() *rmq.Connection {
+	return r.connectionn
+}
+
 // Channel returns a RabbitMQ channel from the connection
 func (r *RabbitMQ) Channel() (*rmq.Channel, error) {
-	ch, err := r.Connection.Channel()
+	ch, err := r.connectionn.Channel()
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +78,6 @@ func (r *RabbitMQ) Channel() (*rmq.Channel, error) {
 func (r *RabbitMQ) NewExchange(name string) (*exchange.Exchange, error) {
 	return exchange.NewExchange(&exchange.Config{
 		ExchangeName: name,
-		Connection:   r.Connection,
+		Connection:   r.connectionn,
 	})
 }
