@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"time"
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 var (
@@ -19,7 +19,7 @@ var (
 // user-supplied interval — so each retry waits a progressively different duration before
 // being redelivered to the target queue.
 type BackoffQueue struct {
-	channel      *rmq.Channel
+	channel      *reconnect.Channel
 	stages       []string // stage queue names, one per interval
 	ExchangeName string
 	QueueName    string
@@ -37,7 +37,7 @@ type BackoffQueueConfig struct {
 // NewBackoffQueue is the constructor for BackoffQueue.
 // Each interval in Intervals must be unique; duplicate values would produce identical
 // queue names and will be rejected with an error.
-func NewBackoffQueue(ch *rmq.Channel, conf *BackoffQueueConfig) (*BackoffQueue, error) {
+func NewBackoffQueue(ch *reconnect.Channel, conf *BackoffQueueConfig) (*BackoffQueue, error) {
 	if len(conf.Intervals) == 0 {
 		return nil, errors.New("intervals must contain at least one duration")
 	}

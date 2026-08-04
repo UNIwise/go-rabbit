@@ -2,25 +2,24 @@ package client
 
 import (
 	"fmt"
-	// This package provides auto-reconnect
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
 	"github.com/uniwise/go-rabbit/exchange"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 // RabbitMQClient is the interface describing a RabbitMQ wrapper
 type RabbitMQClient interface {
 	Config() *Config
-	Connection() *rmq.Connection
-	Channel() (*rmq.Channel, error)
+	Connection() *reconnect.Connection
+	Channel() (*reconnect.Channel, error)
 	NewExchange(name string) (*exchange.Exchange, error)
 }
 
 // RabbitMQ is a wrapper struct for a RabbitMQ connection
 type RabbitMQ struct {
 	config      *Config
-	connectionn *rmq.Connection
+	connectionn *reconnect.Connection
 }
 
 // New is the constructor for RabbitMQImpl
@@ -46,7 +45,7 @@ func (r *RabbitMQ) connect() error {
 		r.config.VHost,
 	)
 
-	conn, err := rmq.Dial(connStr)
+	conn, err := reconnect.Dial(connStr)
 	if err != nil {
 		return err
 	}
@@ -62,13 +61,13 @@ func (r *RabbitMQ) Config() *Config {
 }
 
 // Connection returns the underlying RabbitMQ connection
-func (r *RabbitMQ) Connection() *rmq.Connection {
+func (r *RabbitMQ) Connection() *reconnect.Connection {
 	return r.connectionn
 }
 
 // Channel returns a RabbitMQ channel from the connection
-func (r *RabbitMQ) Channel() (*rmq.Channel, error) {
-	ch, err := r.connectionn.Channel()
+func (r *RabbitMQ) Channel() (*reconnect.Channel, error) {
+	ch, err := r.Connection().Channel()
 	if err != nil {
 		return nil, err
 	}

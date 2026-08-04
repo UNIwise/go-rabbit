@@ -3,9 +3,9 @@ package queue
 import (
 	"context"
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 // NamedQueue is an interface describing queues which can return their name
@@ -15,7 +15,7 @@ type NamedQueue interface {
 
 // BaseQueue contains methods shared by queue implementations, do not instantiate this struct on it's own
 type BaseQueue struct {
-	Channel      *rmq.Channel
+	Channel      *reconnect.Channel
 	QueueName    string
 	ExchangeName string
 	RoutingKey   string

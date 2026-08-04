@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"time"
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 var (
@@ -31,7 +31,7 @@ type BoundedRetryQueueConfig struct {
 }
 
 // NewBoundedRetryQueue constructor for BoundedRetryQueue
-func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*BoundedRetryQueue, error) {
+func NewBoundedRetryQueue(ch *reconnect.Channel, conf *BoundedRetryQueueConfig) (*BoundedRetryQueue, error) {
 	if conf.Prefetch < 0 {
 		return nil, errors.New("Prefetch can't be less than 0")
 	}
