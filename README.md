@@ -4,7 +4,7 @@
 
 The aim of this package is to make a wrapper for RabbitMQ which provides a more objected orientated and opinionated approach which aims for easy queue usage, features include:
 
-- Configuration of client through environment variables
+- Configuration of client through environment variables or a DSN
 - Auto .env detection and usage
 - Auto amqp reconnect
 - Auto queue and exchange declaration
@@ -78,8 +78,28 @@ func main() {
 }
 ```
 
+Or from a DSN. The scheme must be `amqp`, user and password are required, the vhost is the path and the port defaults to 5672:
+
+```go
+rmq, err := rabbit.NewFromDSN("amqp://admin:admin@localhost/vhost")
+```
+
+`client.ParseDSN` returns the `client.Config` without connecting. Errors never contain the DSN or its credentials.
 
 See [examples](examples/) for more.
+
+## Reconnecting
+
+The connection recovers by itself, for as long as it takes. Channels are reopened with the prefetch you set, and
+consumers started with `Consume`, `ConsumeFunc` or `Consumer` pick up the next message when the broker is back, with
+nothing for your code to do.
+
+Delivery tags restart on a recovered channel, so a delivery received before the loss can no longer be acknowledged:
+`Ack`, `Nack` and `Reject` return `queue.ErrStaleDelivery` and the broker redelivers the message. Handle it like any
+other failed acknowledgement.
+
+`Consume` closes the channel it returns when `ctx` is done or the broker ends the consumer, and `ConsumeFunc` stops
+then too.
 
 ## Queue Types
 

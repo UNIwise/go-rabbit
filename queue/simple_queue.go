@@ -1,8 +1,8 @@
 package queue
 
 import (
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 // Queue is the simplest queue abstraction of RabbitMQ
@@ -19,7 +19,7 @@ type QueueConfig struct {
 }
 
 // NewQueue is the constructor for Queue
-func NewQueue(ch *rmq.Channel, exchange string, conf *QueueConfig) (*Queue, error) {
+func NewQueue(ch *reconnect.Channel, exchange string, conf *QueueConfig) (*Queue, error) {
 	if conf.Prefetch < 0 {
 		return nil, errors.New("Prefetch can't be less than 0")
 	}

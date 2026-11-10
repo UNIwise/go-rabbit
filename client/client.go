@@ -1,26 +1,27 @@
 package client
 
 import (
-	"fmt"
-	// This package provides auto-reconnect
+	"net"
+	"net/url"
+	"strconv"
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
 	"github.com/uniwise/go-rabbit/exchange"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 // RabbitMQClient is the interface describing a RabbitMQ wrapper
 type RabbitMQClient interface {
 	Config() *Config
-	Connection() *rmq.Connection
-	Channel() (*rmq.Channel, error)
+	Connection() *reconnect.Connection
+	Channel() (*reconnect.Channel, error)
 	NewExchange(name string) (*exchange.Exchange, error)
 }
 
 // RabbitMQ is a wrapper struct for a RabbitMQ connection
 type RabbitMQ struct {
 	config      *Config
-	connectionn *rmq.Connection
+	connectionn *reconnect.Connection
 }
 
 // New is the constructor for RabbitMQImpl
@@ -38,15 +39,7 @@ func New(config *Config) (*RabbitMQ, error) {
 
 // Connect opens the connect to RabbitMQ
 func (r *RabbitMQ) connect() error {
-	connStr := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
-		r.config.User,
-		r.config.Password,
-		r.config.Host,
-		r.config.Port,
-		r.config.VHost,
-	)
-
-	conn, err := rmq.Dial(connStr)
+	conn, err := reconnect.Dial(connectionURL(r.config))
 	if err != nil {
 		return err
 	}
@@ -62,13 +55,13 @@ func (r *RabbitMQ) Config() *Config {
 }
 
 // Connection returns the underlying RabbitMQ connection
-func (r *RabbitMQ) Connection() *rmq.Connection {
+func (r *RabbitMQ) Connection() *reconnect.Connection {
 	return r.connectionn
 }
 
 // Channel returns a RabbitMQ channel from the connection
-func (r *RabbitMQ) Channel() (*rmq.Channel, error) {
-	ch, err := r.connectionn.Channel()
+func (r *RabbitMQ) Channel() (*reconnect.Channel, error) {
+	ch, err := r.Connection().Channel()
 	if err != nil {
 		return nil, err
 	}
@@ -82,4 +75,16 @@ func (r *RabbitMQ) NewExchange(name string) (*exchange.Exchange, error) {
 		ExchangeName: name,
 		Connection:   r.connectionn,
 	})
+}
+
+func connectionURL(config *Config) string {
+	connURL := url.URL{
+		Scheme: "amqp",
+		User:   url.UserPassword(config.User, config.Password),
+		Host:   net.JoinHostPort(config.Host, strconv.FormatUint(uint64(config.Port), 10)),
+		Path:   "/" + config.VHost,
+	}
+	connURL.RawPath = "/" + url.PathEscape(config.VHost)
+
+	return connURL.String()
 }

@@ -1,12 +1,11 @@
 package queue
 
 import (
-	"strconv"
 	"time"
 
-	rmq "github.com/isayme/go-amqp-reconnect/rabbitmq"
 	"github.com/pkg/errors"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/uniwise/go-rabbit/internal/reconnect"
 )
 
 var (
@@ -31,7 +30,7 @@ type BoundedRetryQueueConfig struct {
 }
 
 // NewBoundedRetryQueue constructor for BoundedRetryQueue
-func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*BoundedRetryQueue, error) {
+func NewBoundedRetryQueue(ch *reconnect.Channel, conf *BoundedRetryQueueConfig) (*BoundedRetryQueue, error) {
 	if conf.Prefetch < 0 {
 		return nil, errors.New("Prefetch can't be less than 0")
 	}
@@ -67,7 +66,7 @@ func NewBoundedRetryQueue(ch *rmq.Channel, conf *BoundedRetryQueueConfig) (*Boun
 // the count is stored in the "x-redelivered-count" header
 // If the max number of redeliveries is reached a ErrMaxRetries error will be returned
 func (q *BoundedRetryQueue) Publish(delivery amqp.Delivery) error {
-	redeliveries, err := q.getRedeliveries(delivery)
+	redeliveries, err := redeliveryCount(delivery)
 	if err != nil {
 		return err
 	}
@@ -76,35 +75,31 @@ func (q *BoundedRetryQueue) Publish(delivery amqp.Delivery) error {
 		return ErrMaxRetriesReached
 	}
 
-	redeliveries++
+	return q.publishWithCount(delivery.Body, redeliveries+1)
+}
 
+// PublishWithoutRetryIncrement does the same as Publish but keeps the number of times the message has been
+// redelivered as it is, so it does not use up a retry. A message that has not been redelivered yet is published
+// without the "x-redelivered-count" header.
+func (q *BoundedRetryQueue) PublishWithoutRetryIncrement(delivery amqp.Delivery) error {
+	redeliveries, err := redeliveryCount(delivery)
+	if err != nil {
+		return err
+	}
+
+	return q.publishWithCount(delivery.Body, redeliveries)
+}
+
+func (q *BoundedRetryQueue) publishWithCount(body []byte, redeliveries int) error {
 	if err := q.Channel.Publish(q.ExchangeName, q.QueueName, false, false, amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
-		Body:         delivery.Body,
-		Headers: amqp.Table{
-			"x-redelivered-count": redeliveries,
-		},
+		Body:         body,
+		Headers:      redeliveryHeaders(redeliveries),
 	}); err != nil {
 		return errors.Wrap(err, "Failed to publish to queue")
 	}
 
 	return nil
-}
-
-// PublishWithoutRetryIncrement does the same as Publish but without incrementing the number of times the package has been redelivered
-func (q *BoundedRetryQueue) PublishWithoutRetryIncrement(delivery amqp.Delivery) error {
-	redeliveries, err := q.getRedeliveries(delivery)
-	if err != nil {
-		return err
-	}
-
-	if redeliveries > 0 {
-		delivery.Headers = amqp.Table{
-			"x-redelivered-count": redeliveries - 1,
-		}
-	}
-
-	return q.Publish(delivery)
 }
 
 func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
@@ -128,29 +123,4 @@ func (q *BoundedRetryQueue) declare(ttl time.Duration, prefetch int) error {
 	}
 
 	return nil
-}
-
-func (q *BoundedRetryQueue) getRedeliveries(delivery amqp.Delivery) (int, error) {
-	redelivered := 0
-
-	if delivery.Headers != nil {
-		v, okKey := delivery.Headers["x-redelivered-count"]
-		if okKey {
-			var err error
-
-			switch t := v.(type) {
-			case string:
-				redelivered, err = strconv.Atoi(t)
-				if err != nil {
-					return 0, errors.Wrap(err, "Failed to convert x-redelivered-count to int")
-				}
-			case int32:
-				redelivered = int(t)
-			default:
-				return 0, errors.Wrap(err, "Failed to convert x-redelivered-count to int")
-			}
-		}
-	}
-
-	return redelivered, nil
 }
