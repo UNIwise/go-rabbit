@@ -80,3 +80,55 @@ func TestSimpleQueue_ConsumeFunc(t *testing.T) {
 		t.Fatal("timed out waiting for message")
 	}
 }
+
+func TestSimpleQueue_ConsumeClosesOutputWhenBrokerEndsConsumer(t *testing.T) {
+	t.Parallel()
+	rmq := newTestClient(t)
+
+	ex, err := rmq.NewExchange(uniqueName(t, "exchange"))
+	require.NoError(t, err)
+
+	q, err := ex.NewQueue(uniqueName(t, "queue"), 10)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	deliveries, err := q.Consume(ctx)
+	require.NoError(t, err)
+
+	_, err = q.Channel.QueueDelete(q.Name(), false, false, false)
+	require.NoError(t, err)
+
+	select {
+	case _, open := <-deliveries:
+		assert.False(t, open, "no delivery was expected")
+	case <-ctx.Done():
+		t.Fatal("the output channel was not closed after the broker cancelled the consumer")
+	}
+}
+
+func TestSimpleQueue_ConsumeClosesOutputWhenContextIsDone(t *testing.T) {
+	t.Parallel()
+	rmq := newTestClient(t)
+
+	ex, err := rmq.NewExchange(uniqueName(t, "exchange"))
+	require.NoError(t, err)
+
+	q, err := ex.NewQueue(uniqueName(t, "queue"), 10)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	deliveries, err := q.Consume(ctx)
+	require.NoError(t, err)
+
+	cancel()
+
+	select {
+	case _, open := <-deliveries:
+		assert.False(t, open)
+	case <-time.After(5 * time.Second):
+		t.Fatal("the output channel was not closed after ctx was cancelled")
+	}
+}

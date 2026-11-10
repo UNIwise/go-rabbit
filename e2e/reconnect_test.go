@@ -51,19 +51,9 @@ func TestReconnect_ConnectionRecovery(t *testing.T) {
 		t.Fatal("timed out waiting for pre-disconnect message")
 	}
 
-	// ── Phase 2: stop RabbitMQ app (keeps container+port alive) ──────────
-	// rabbitmqctl stop_app sends ConnectionForced (320) to clients, which is
-	// in RecoverableErrorCodes, so amqp091 recovery triggers immediately.
-	t.Log("stopping RabbitMQ app")
-	exitCode, _, err := container.Exec(ctx, []string{"rabbitmqctl", "stop_app"})
-	require.NoError(t, err)
-	require.Equal(t, 0, exitCode, "rabbitmqctl stop_app failed")
-
-	// ── Phase 3: restart RabbitMQ app ─────────────────────────────────────
-	t.Log("starting RabbitMQ app")
-	exitCode, _, err = container.Exec(ctx, []string{"rabbitmqctl", "start_app"})
-	require.NoError(t, err)
-	require.Equal(t, 0, exitCode, "rabbitmqctl start_app failed")
+	// ── Phase 2: restart the RabbitMQ app (keeps container+port alive) ───
+	// stop_app sends ConnectionForced (320) to clients, so amqp091 recovery triggers immediately.
+	restartBroker(t, container, 0)
 
 	// ── Phase 4: verify operation after reconnect ─────────────────────────
 	// amqp091 recovery retries with a 1 s interval; poll until publish works.
@@ -124,4 +114,46 @@ func TestReconnect_ChannelRecovery(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("timed out waiting for message after channel close")
 	}
+}
+
+// TestReconnect_PrefetchSurvivesRecovery verifies that the prefetch set when the queue was created still limits
+// the consumer after the connection was lost and recovered.
+func TestReconnect_PrefetchSurvivesRecovery(t *testing.T) {
+	const prefetch = 2
+
+	rmq, container := newTestSetup(t)
+
+	ex, err := rmq.NewExchange(uniqueName(t, "exchange"))
+	require.NoError(t, err)
+
+	q, err := ex.NewQueue(uniqueName(t, "queue"), prefetch)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
+	defer cancel()
+
+	deliveries, err := q.Consume(ctx)
+	require.NoError(t, err)
+
+	restartBroker(t, container, 0)
+
+	require.Eventually(t, func() bool {
+		return q.Publish([]byte("probe")) == nil
+	}, 30*time.Second, 200*time.Millisecond, "publish never succeeded after reconnect")
+
+	for i := 0; i < 10; i++ {
+		require.NoError(t, q.Publish([]byte("message")))
+	}
+
+	unacked := 0
+	for collecting := true; collecting; {
+		select {
+		case <-deliveries:
+			unacked++
+		case <-time.After(2 * time.Second):
+			collecting = false
+		}
+	}
+
+	assert.Equal(t, prefetch, unacked, "broker must not send more than the prefetch while nothing is acknowledged")
 }
