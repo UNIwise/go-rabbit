@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/uniwise/go-rabbit/queue"
@@ -64,4 +65,55 @@ func TestBackoffQueue(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("timed out waiting for final delivery after backoff exhausted")
 	}
+}
+
+// TestBackoffQueue_PublishWithoutStageAdvance verifies that re-scheduling does not consume a stage, not even
+// for a message that has not been through the backoff yet.
+func TestBackoffQueue_PublishWithoutStageAdvance(t *testing.T) {
+	t.Parallel()
+
+	rmq := newTestClient(t)
+
+	ex, err := rmq.NewExchange(uniqueName(t, "exchange"))
+	require.NoError(t, err)
+
+	targetQ, err := ex.NewQueue(uniqueName(t, "target"), 10)
+	require.NoError(t, err)
+
+	backoffQ, err := ex.NewBackoffQueue(uniqueName(t, "backoff"), []time.Duration{300 * time.Millisecond, 400 * time.Millisecond}, targetQ)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	deliveries, err := targetQ.Consume(ctx)
+	require.NoError(t, err)
+
+	next := func() amqp.Delivery {
+		t.Helper()
+
+		select {
+		case d := <-deliveries:
+			require.NoError(t, d.Ack(false))
+			return d
+		case <-ctx.Done():
+			t.Fatal("timed out waiting for delivery")
+			return amqp.Delivery{}
+		}
+	}
+
+	require.NoError(t, targetQ.Publish([]byte("rescheduled")))
+	fresh := next()
+
+	require.NoError(t, backoffQ.PublishWithoutStageAdvance(fresh))
+	rescheduled := next()
+	assert.NotContains(t, rescheduled.Headers, "x-redelivered-count", "a rescheduled fresh message must still have no count")
+
+	require.NoError(t, backoffQ.Publish(rescheduled))
+	firstBackoff := next()
+	assert.EqualValues(t, 1, firstBackoff.Headers["x-redelivered-count"])
+
+	require.NoError(t, backoffQ.PublishWithoutStageAdvance(firstBackoff))
+	rescheduledAgain := next()
+	assert.EqualValues(t, 1, rescheduledAgain.Headers["x-redelivered-count"], "rescheduling must keep the stage")
 }
