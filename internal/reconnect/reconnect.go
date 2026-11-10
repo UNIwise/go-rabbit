@@ -1,7 +1,7 @@
 // Package reconnect provides thin wrappers around amqp091 that enable the
 // library's native automatic-recovery feature. When a connection drops,
-// amqp091 transparently reconnects, reopens channels, and re-registers
-// consumers — so callers see uninterrupted delivery channels.
+// amqp091 transparently reconnects, reopens channels, re-applies Qos and
+// re-registers consumers — so callers see uninterrupted delivery channels.
 package reconnect
 
 import (
@@ -18,28 +18,13 @@ type Connection struct {
 }
 
 // Dial dials url and returns a Connection with native amqp091 auto-recovery.
-//
-// Recovery is triggered for:
-//   - ConnectionForced (320): broker-initiated graceful close
-//   - InternalError (541): broker internal error
-//   - FrameError (501): TCP-level disconnects (io.EOF, ECONNRESET, hard kills)
-//
-// Matches the old isayme/go-amqp-reconnect behaviour: retries indefinitely.
-// Uses a 1 s interval (the old package also used 3 s, but faster reconnects
-// are strictly better for clients).
+// Every unexpected close triggers recovery, which retries indefinitely.
 func Dial(url string) (*Connection, error) {
 	conn, err := amqp.DialConfig(url, amqp.Config{
 		Recovery: &amqp.Recovery{
 			ReconnectionConfig: &amqp.ReconnectionConfig{
 				MaxRetryCount: math.MaxInt,
 				RetryInterval: 1 * time.Second,
-				// Include FrameError so hard TCP kills (e.g. container restart)
-				// are also treated as recoverable.
-				RecoverableErrorCodes: []int{
-					amqp.ConnectionForced,
-					amqp.InternalError,
-					amqp.FrameError,
-				},
 			},
 		},
 	})
