@@ -3,10 +3,9 @@ package e2e_test
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"os"
-	"strconv"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	tc_rabbitmq "github.com/testcontainers/testcontainers-go/modules/rabbitmq"
@@ -58,27 +57,30 @@ func clientFromContainer(t *testing.T, container *tc_rabbitmq.RabbitMQContainer)
 	amqpURL, err := container.AmqpURL(ctx)
 	require.NoError(t, err)
 
-	u, err := url.Parse(amqpURL)
-	require.NoError(t, err)
-
-	portNum, err := strconv.ParseUint(u.Port(), 10, 32)
-	require.NoError(t, err)
-
-	password, _ := u.User.Password()
-	vhost := u.Path
-	if len(vhost) > 0 && vhost[0] == '/' {
-		vhost = vhost[1:]
-	}
-
-	c, err := rabbit.New(&client.Config{
-		Host:     u.Hostname(),
-		Port:     uint32(portNum),
-		User:     u.User.Username(),
-		Password: password,
-		VHost:    vhost,
-	})
+	c, err := rabbit.NewFromDSN(amqpURL)
 	require.NoError(t, err, "failed to connect to RabbitMQ")
 	return c
+}
+
+// restartBroker stops the RabbitMQ app inside the container, keeps it down for downFor and starts it again.
+// rabbitmqctl is used instead of stopping the Docker container because testcontainers-go reassigns random host
+// ports on container restart, which breaks the URL amqp091 recovery redials.
+// Callers must not run in parallel: the broker is unavailable while this runs.
+func restartBroker(t *testing.T, container *tc_rabbitmq.RabbitMQContainer, downFor time.Duration) {
+	t.Helper()
+	ctx := context.Background()
+
+	t.Log("stopping RabbitMQ app")
+	exitCode, _, err := container.Exec(ctx, []string{"rabbitmqctl", "stop_app"})
+	require.NoError(t, err)
+	require.Equal(t, 0, exitCode, "rabbitmqctl stop_app failed")
+
+	time.Sleep(downFor)
+
+	t.Log("starting RabbitMQ app")
+	exitCode, _, err = container.Exec(ctx, []string{"rabbitmqctl", "start_app"})
+	require.NoError(t, err)
+	require.Equal(t, 0, exitCode, "rabbitmqctl start_app failed")
 }
 
 // uniqueName generates a unique queue/exchange name for a test to avoid collisions.

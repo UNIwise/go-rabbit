@@ -1,7 +1,9 @@
 package client
 
 import (
-	"fmt"
+	"net"
+	"net/url"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/uniwise/go-rabbit/exchange"
@@ -37,15 +39,7 @@ func New(config *Config) (*RabbitMQ, error) {
 
 // Connect opens the connect to RabbitMQ
 func (r *RabbitMQ) connect() error {
-	connStr := fmt.Sprintf("amqp://%s:%s@%s:%d/%s",
-		r.config.User,
-		r.config.Password,
-		r.config.Host,
-		r.config.Port,
-		r.config.VHost,
-	)
-
-	conn, err := reconnect.Dial(connStr)
+	conn, err := reconnect.Dial(connectionURL(r.config))
 	if err != nil {
 		return err
 	}
@@ -81,4 +75,16 @@ func (r *RabbitMQ) NewExchange(name string) (*exchange.Exchange, error) {
 		ExchangeName: name,
 		Connection:   r.connectionn,
 	})
+}
+
+func connectionURL(config *Config) string {
+	connURL := url.URL{
+		Scheme: "amqp",
+		User:   url.UserPassword(config.User, config.Password),
+		Host:   net.JoinHostPort(config.Host, strconv.FormatUint(uint64(config.Port), 10)),
+		Path:   "/" + config.VHost,
+	}
+	connURL.RawPath = "/" + url.PathEscape(config.VHost)
+
+	return connURL.String()
 }
