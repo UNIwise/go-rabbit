@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 	tc_rabbitmq "github.com/testcontainers/testcontainers-go/modules/rabbitmq"
-	rabbit "github.com/uniwise/go-rabbit"
-	"github.com/uniwise/go-rabbit/client"
+	rabbit "github.com/uniwise/go-rabbit/v2"
+	"github.com/uniwise/go-rabbit/v2/client"
 )
 
 // sharedContainer is started once in TestMain and reused by every test.

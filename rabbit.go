@@ -1,7 +1,7 @@
 package rabbit
 
 import (
-	"github.com/uniwise/go-rabbit/client"
+	"github.com/uniwise/go-rabbit/v2/client"
 )
 
 // New returns a new RabbitMQ client with the provided configuration

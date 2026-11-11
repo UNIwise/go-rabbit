@@ -8,7 +8,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uniwise/go-rabbit/queue"
+	"github.com/uniwise/go-rabbit/v2/queue"
 )
 
 // TestBoundedRetryQueue verifies the full retry lifecycle:

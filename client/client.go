@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/uniwise/go-rabbit/exchange"
-	"github.com/uniwise/go-rabbit/internal/reconnect"
+	"github.com/uniwise/go-rabbit/v2/exchange"
+	"github.com/uniwise/go-rabbit/v2/internal/reconnect"
 )
 
 // RabbitMQClient is the interface describing a RabbitMQ wrapper

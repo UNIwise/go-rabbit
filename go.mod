@@ -1,4 +1,4 @@
-module github.com/uniwise/go-rabbit
+module github.com/uniwise/go-rabbit/v2
 
 go 1.26
 

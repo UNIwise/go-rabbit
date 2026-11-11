@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	rabbit "github.com/uniwise/go-rabbit"
-	"github.com/uniwise/go-rabbit/queue"
+	rabbit "github.com/uniwise/go-rabbit/v2"
+	"github.com/uniwise/go-rabbit/v2/queue"
 )
 
 func main() {
