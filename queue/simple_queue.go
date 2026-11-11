@@ -2,7 +2,7 @@ package queue
 
 import (
 	"github.com/pkg/errors"
-	"github.com/uniwise/go-rabbit/internal/reconnect"
+	"github.com/uniwise/go-rabbit/v2/internal/reconnect"
 )
 
 // Queue is the simplest queue abstraction of RabbitMQ

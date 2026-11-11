@@ -5,8 +5,8 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/uniwise/go-rabbit/internal/reconnect"
-	"github.com/uniwise/go-rabbit/queue"
+	"github.com/uniwise/go-rabbit/v2/internal/reconnect"
+	"github.com/uniwise/go-rabbit/v2/queue"
 )
 
 // Exchanger is an interface which describe the minimum methods a RabbitMQ exchange must implement

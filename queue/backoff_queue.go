@@ -6,7 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"github.com/uniwise/go-rabbit/internal/reconnect"
+	"github.com/uniwise/go-rabbit/v2/internal/reconnect"
 )
 
 var (

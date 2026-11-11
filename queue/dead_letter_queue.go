@@ -5,7 +5,7 @@ import (
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/pkg/errors"
-	"github.com/uniwise/go-rabbit/internal/reconnect"
+	"github.com/uniwise/go-rabbit/v2/internal/reconnect"
 )
 
 // DeadLetterQueue redelivers messages to a target queue after a provided TTL

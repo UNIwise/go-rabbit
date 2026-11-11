@@ -5,7 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/uniwise/go-rabbit/client"
+	"github.com/uniwise/go-rabbit/v2/client"
 )
 
 func TestParseDSN(t *testing.T) {
